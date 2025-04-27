@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <title>讽刺人生模拟器</title>
+    <style>
+        /* --- Base CSS remains the same --- */
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5; display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 20px 0; margin: 0;
+        }
+        .game-container {
+            background-color: #fff; padding: 25px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); text-align: center;
+            min-width: 450px; max-width: 650px; /* Slightly wider for 3 buttons */
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        #status-display {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px;
+            margin-bottom: 20px; text-align: left; padding: 0 15px;
+        }
+        #status-display p { margin: 5px 0; font-size: 1.1em; color: #555; }
+        #status-display span { font-weight: bold; color: #1a1a1a; float: right; margin-left: 10px; }
+        #event-text {
+            margin-top: 20px; margin-bottom: 25px; font-style: italic; color: #0056b3;
+            min-height: 4em; line-height: 1.6; background-color: #e9f5ff;
+            padding: 12px; border-radius: 4px; border-left: 4px solid #007bff;
+            text-align: left;
+        }
+         #actions {
+             display: flex; justify-content: center; gap: 10px; /* Reduced gap slightly */
+             flex-wrap: wrap; /* Allow buttons to wrap if needed */
+             margin-bottom: 15px;
+         }
+         #reborn-button-container { margin-top: 20px; min-height: 50px; }
+
+        button {
+            padding: 10px 20px; /* Slightly smaller padding */ cursor: pointer; background-color: #007bff;
+            color: white; border: none; border-radius: 5px; font-size: 1em;
+            font-family: inherit; transition: background-color 0.2s ease, transform 0.1s ease;
+            margin-top: 5px; /* Add margin top for wrapping */
+        }
+        button:hover { background-color: #0056b3; transform: translateY(-1px); }
+        button:active { transform: translateY(1px); }
+        button:disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; transform: none; }
+
+        /* Specific Button Styles */
+        #action3-button { display: none; } /* Hide Travel button initially */
+        #reborn-button { background-color: #28a745; display: none; }
+        #reborn-button:hover { background-color: #218838; }
+
+        /* Status Text Styles */
+        .game-over { color: #dc3545 !important; border-left-color: #dc3545 !important; background-color: #f8d7da !important; font-weight: bold; }
+        .milestone { color: #198754 !important; border-left-color: #28a745 !important; background-color: #d1e7dd !important; font-weight: bold; }
+    </style>
+</head>
+<body>
+     <div class="game-container">
+        <h1 id="game-title">人生模拟器</h1>
+
+        <div id="status-display">
+            <p>年龄: <span id="stat-age">6</span></p>
+            <p>学业/事业: <span id="stat-study-career">50</span></p>
+            <p>压力: <span id="stat-stress">10</span></p>
+            <p>金钱: <span id="stat-money">0</span></p>
+            <p>感情状况: <span id="stat-relationship">单身</span></p>
+            <p>健康: <span id="stat-health">100</span></p>
+        </div>
+
+        <p id="event-text">你的旅程从小学开始了……</p>
+
+        <div id="actions">
+             <button id="action1-button">疯狂学习</button>
+             <button id="action2-button">偷偷放松</button>
+             <button id="action3-button">外出旅游</button> <!-- Added Travel button -->
+        </div>
+
+        <div id="reborn-button-container">
+            <button id="reborn-button">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            console.log("DOM loaded, initializing game...");
+
+            // --- References ---
+            const gameTitle = document.getElementById('game-title');
+            const statAge = document.getElementById('stat-age');
+            const statStudyCareer = document.getElementById('stat-study-career');
+            const statStress = document.getElementById('stat-stress');
+            const statMoney = document.getElementById('stat-money');
+            const statRelationship = document.getElementById('stat-relationship');
+            const statHealth = document.getElementById('stat-health');
+            const eventText = document.getElementById('event-text');
+            const action1Button = document.getElementById('action1-button');
+            const action2Button = document.getElementById('action2-button');
+            const action3Button = document.getElementById('action3-button'); // Reference travel button
+            const rebornButton = document.getElementById('reborn-button');
+            const rebornButtonContainer = document.getElementById('reborn-button-container');
+
+            // --- Game State Variables ---
+            let age = 6.0;
+            let studyCareer = 50;
+            let stress = 10;
+            let money = 0;
+            let relationshipStatus = '单身';
+            let health = 100;
+            let isInWorkPhase = false;
+            let gameOver = false;
+            let canBuyCatPS5 = false; // Flag for the special state of button 2
+
+            // Event flags remain the same
+            const eventTriggered = { /* ... */
+                universityAdmitted: false, universityFailed: false, firstJob: false,
+                datingStarted: false, gotMarried: false, hospitalWarning: false,
+                hospitalVisit: false, midlifeCrisis: false, heartAttackWarning: false,
+                heartAttack: false, retirement: false, boughtCatPS5: false // Add flag for cat/ps5 purchase
+            };
+
+            // --- Initialization Function ---
+             function initGame() {
+                updateDisplay();
+                action1Button.disabled = false;
+                action2Button.disabled = false;
+                action3Button.style.display = 'none'; // Ensure travel button is hidden
+                action3Button.disabled = false;       // And enabled
+                rebornButton.style.display = 'none';
+                console.log("Game initialized!");
+             }
+
+            // --- Update Display Function (no changes needed here) ---
+             function updateDisplay() { /* ... */
+                statAge.textContent = age.toFixed(1);
+                statStudyCareer.textContent = studyCareer;
+                statStress.textContent = stress;
+                statMoney.textContent = money;
+                statRelationship.textContent = relationshipStatus;
+                statHealth.textContent = health;
+                if (stress < 0) stress = 0; if (studyCareer < 0) studyCareer = 0;
+                if (health < 0) health = 0; if (health > 100) health = 100;
+                if (stress > 100) stress = 100; if (money < 0) money = 0;
+                console.log("Display updated:", { age, studyCareer, stress, money, relationshipStatus, health, isInWorkPhase, canBuyCatPS5 });
+            }
+
+            // --- Handle Action Function ---
+             function handleAction(actionType) {
+                 if (gameOver) return;
+                 age += 0.5;
+                 let actionDesc = ""; // Single description variable
+
+                 // --- Shared Logic ---
+                 stress += Math.floor(Math.random() * 3) - 1; // Random stress fluctuation
+
+                 // --- Action Specific Logic ---
+                 if (actionType === 1) { // Button 1: Study Hard / Work Hard
+                     if (!isInWorkPhase) { // Study Hard
+                         studyCareer += 7; stress += 5; health -= 1;
+                         actionDesc = "你像疯了一样埋头苦读。分数上去了，压力也上去了。";
+                     } else { // Work Hard
+                         studyCareer += 3; let income = 50 + Math.floor(studyCareer / 10); money += income; stress += 6; health -= 2;
+                         actionDesc = `你为工作投入了大量时间。薪水不错 (增加了 ${income})，但你感受到了身心的疲惫。`;
+                     }
+                 } else if (actionType === 2) { // Button 2: Relax / Leisure / Buy Cat/PS5
+                     if (canBuyCatPS5) { // Buy Cat/PS5
+                         money -= 600; // Higher cost
+                         stress -= 25; // Significant stress relief
+                         health += 5;  // Health boost (mental)
+                         actionDesc = "你买了只猫/PS5来陪伴自己。压力大大减少，但钱包彻底空了。";
+                         eventTriggered.boughtCatPS5 = true; // Mark as purchased
+                         // Optionally disable this button after purchase? Or allow repeated buys?
+                         // For simplicity, let's allow repeated buys, representing ongoing costs/joy.
+                     } else if (!isInWorkPhase) { // Secretly Relax
+                         studyCareer -= 3; stress -= 8; health += 2;
+                         actionDesc = "你用你的“学习机”偷偷玩了会儿游戏，感觉不错，但内心有点负罪感。";
+                     } else { // Leisure Time
+                         money -= 20; stress -= 10; health += 1;
+                         actionDesc = "你通过电子游戏（或昂贵的咖啡）逃避现实。压力减轻了，钱包也瘪了。";
+                     }
+                 } else if (actionType === 3) { // Button 3: Travel
+                     if (age >= 24) { // Condition should already be met if button is visible, but double-check
+                         money -= 150; // Cost of travel
+                         health += 8;  // Good health boost
+                         stress -= 12; // Good stress relief
+                         actionDesc = "你外出旅游了一趟，开阔了眼界，身心舒畅，但也花了不少钱。";
+                     } else {
+                         actionDesc = "现在还不是旅游的时候。"; // Fallback
+                     }
+                 }
+
+                 eventText.textContent = actionDesc;
+                 eventText.className = ''; // Reset class
+                 updateDisplay();
+                 checkEventsAndProgress(); // Update buttons *after* processing action
+            }
+
+
+            // --- Event Listeners ---
+            action1Button.addEventListener('click', () => handleAction(1));
+            action2Button.addEventListener('click', () => handleAction(2));
+            action3Button.addEventListener('click', () => handleAction(3)); // Listener for travel button
+            rebornButton.addEventListener('click', () => { location.reload(); });
+
+
+             // --- Check Milestones, Events, Button States, and Game Over ---
+            function checkEventsAndProgress() {
+                if (gameOver) return;
+
+                let eventOccurred = false;
+                let currentEventText = "";
+                let currentEventClass = "";
+
+                // --- Button Visibility and Text Updates ---
+                // Travel Button Visibility
+                if (age >= 24 && action3Button.style.display === 'none') {
+                    action3Button.style.display = 'inline-block';
+                    console.log("Travel button visible.");
+                }
+
+                // Buy Cat/PS5 Button State
+                canBuyCatPS5 = (age >= 35 && relationshipStatus !== '已婚' && !eventTriggered.gotMarried); // Determine if eligible
+                if (isInWorkPhase) { // Only change button 2 text when in work phase
+                    if (canBuyCatPS5) {
+                        action2Button.textContent = '买猫/PS5'; // Change button text
+                    } else {
+                        action2Button.textContent = '休闲时间'; // Revert button text
+                    }
+                }
+
+
+                // --- Phase Transition ---
+                if (age >= 22 && !isInWorkPhase) {
+                    isInWorkPhase = true;
+                    action1Button.textContent = '拼命工作';
+                    // Button 2 text is handled above based on canBuyCatPS5 flag
+                    currentEventText = "欢迎来到成年人的“精彩”世界！工作开始了，按钮功能已改变。";
+                    currentEventClass = 'milestone'; eventOccurred = true;
+                    if (eventTriggered.universityAdmitted) money += 100; if (eventTriggered.universityFailed) money += 10;
+                    console.log("Transitioned to Work Phase");
+                 }
+
+                // --- Milestones & Events ---
+                // University Admission (Age 18)
+                if (age >= 18 && age < 18.5 && !eventTriggered.universityAdmitted && !eventTriggered.universityFailed && !eventOccurred) {
+                     if (studyCareer >= 80) { currentEventText = "太棒了！你高考超常发挥！被名牌大学录取！父母骄傲得不行。"; eventTriggered.universityAdmitted = true; studyCareer += 10; stress -= 10; }
+                     else if (studyCareer >= 50) { currentEventText = "好吧，你通过了高考，进了一所大学。还……行吧。父母说下次努力。"; eventTriggered.universityAdmitted = true; }
+                     else { currentEventText = "呃……高考失利。巨大的失落感袭来。也许可以试试职业学校？"; eventTriggered.universityFailed = true; stress += 20; health -= 5; }
+                     currentEventClass = 'milestone'; eventOccurred = true;
+                 }
+
+                // First Job (Age 22)
+                 if (age >= 22 && age < 22.5 && !eventTriggered.firstJob && isInWorkPhase && !eventOccurred) {
+                      if (eventTriggered.universityAdmitted && studyCareer > 70) { currentEventText = "你的好文凭帮你找到了一份不错的起步工作。是时候开始爬梯子了！"; money += 500; }
+                      else if (eventTriggered.universityAdmitted) { currentEventText = "你找到了一份工作。勉强能付账单。至少有工作了？"; money += 100; }
+                      else { currentEventText = "没有大学文凭找工作很难。你只能接受能找到的。这……令人谦卑。"; studyCareer -= 10; stress += 5; }
+                      eventTriggered.firstJob = true; currentEventClass = 'milestone'; eventOccurred = true;
+                  }
+
+                // Relationships (Mid 20s)
+                if (age >= 24 && age < 28 && relationshipStatus === '单身' && !eventTriggered.datingStarted && !eventOccurred) {
+                    if (stress < 60 && Math.random() > 0.4) {
+                        relationshipStatus = '恋爱中';
+                        currentEventText = "在父母无休止的唠叨……呃，*介绍*下，你开始和某人约会了！";
+                        stress -= 5; eventTriggered.datingStarted = true;
+                        currentEventClass = 'milestone'; eventOccurred = true;
+                        console.log("Dating Started Triggered at age", age);
+                    } else if (stress >= 60 && age >= 27.5){
+                         currentEventText = "你的父母想给你介绍对象，但你压力太大/太忙，根本没心思谈恋爱。";
+                         eventOccurred = true;
+                    }
+                }
+
+                // Marriage (Late 20s / Early 30s - Using easier conditions)
+                if (age >= 28 && age < 33 && !eventTriggered.gotMarried && !eventOccurred) {
+                     if (relationshipStatus === '恋爱中') {
+                        if (money > 500 && stress < 75 && Math.random() > 0.4) {
+                            relationshipStatus = '已婚';
+                            currentEventText = "压力山大，时机成熟（或不成熟）。你结婚了！恭喜？婚礼花掉了一些积蓄。";
+                            money -= 500; stress += 10;
+                            eventTriggered.gotMarried = true;
+                            canBuyCatPS5 = false; // Can no longer buy cat/PS5 if married
+                            action2Button.textContent = '休闲时间'; // Ensure button 2 resets
+                            currentEventClass = 'milestone'; eventOccurred = true;
+                            console.log("Marriage Triggered at age", age);
+                        } else if (age >= 32.5) { // Dating Timeout
+                            relationshipStatus = '孤独寻觅中';
+                            currentEventText = "感情没有结果，或者时机总是不对。你又单身了，感觉有点孤独……";
+                            stress += 5;
+                            console.log("Dating timed out, became Lonely and searching at age", age);
+                            eventOccurred = true;
+                        }
+                     }
+                }
+
+                 // --- Health Events ---
+                 if (stress > 85 && !eventTriggered.hospitalWarning && !eventOccurred) {
+                    currentEventText = "警告：你感到持续疲惫、易怒，可能快得溃疡了。也许该放慢脚步？";
+                    eventTriggered.hospitalWarning = true; health -= 5; currentEventClass = ''; eventOccurred = true;
+                 } else if (stress > 95 && !eventTriggered.hospitalVisit && !eventOccurred) {
+                      currentEventText = "你因过度劳累而晕倒了！短暂的住院提醒你，你终究是凡人。医生建议休息。";
+                      eventTriggered.hospitalVisit = true; eventTriggered.hospitalWarning = true; health -= 15; stress -= 30; money -= 300;
+                      currentEventClass = 'game-over'; eventOccurred = true;
+                  }
+
+                 // Mid-life Crisis (Around 40)
+                 if (age >= 40 && age < 40.5 && !eventTriggered.midlifeCrisis && !eventOccurred) {
+                     currentEventText = "难道……就这样了吗？你凝视着镜子，质疑自己的人生选择。突然，买辆跑车的想法似乎很有吸引力。";
+                     eventTriggered.midlifeCrisis = true; stress += 15;
+                     if (money > 5000 && Math.random() > 0.5) { currentEventText += " 你买了辆可笑的跑车！(-3000 金钱)"; money -= 3000; }
+                     currentEventClass = ''; eventOccurred = true;
+                  }
+
+                // Heart Attack Warning (50+)
+                 if (age >= 50 && health < 40 && stress > 70 && !eventTriggered.heartAttackWarning && !eventOccurred) {
+                     currentEventText = "你最近感到胸痛。医生看起来很担心，提到了“生活方式的改变”。不妙。";
+                     eventTriggered.heartAttackWarning = true; health -= 10; stress += 5;
+                     currentEventClass = 'game-over'; eventOccurred = true;
+                  }
+
+                 // Update event text if a major event occurred (and wasn't handled by handleAction)
+                 if (eventOccurred) {
+                     eventText.textContent = currentEventText;
+                     eventText.className = currentEventClass;
+                 }
+
+                // --- Game Over Conditions ---
+                 if (health <= 0 && !gameOver) { eventText.textContent = "你的身体终于垮了。你忽视健康太久了。游戏结束。"; endGame(); return; }
+                 if (stress >= 100 && health < 20 && !gameOver) { eventText.textContent = "压力无法承受，健康崩溃。你再也撑不下去了。游戏结束。"; endGame(); return; }
+                 if (age >= 55 && health < 20 && stress > 80 && !eventTriggered.heartAttack && !gameOver) { eventText.textContent = "大事件！多年的压力和忽视终于找上门来。你捂住胸口…… 游戏结束。"; eventTriggered.heartAttack = true; endGame(); return; }
+                 if (age >= 35 && studyCareer < 30 && isInWorkPhase && !gameOver) { eventText.textContent = "你的事业从未起飞。困在没有前途的工作中，你不知道哪里出了问题。结局惨淡。游戏结束。"; endGame(); return; }
+
+                 // --- Retirement Condition ---
+                 if (age >= 65 && !gameOver) {
+                      let endMessage = "你到达了退休年龄！ ";
+                     if (money > 10000 && health > 50 && stress < 50) { endMessage += "你很好地管理了你的人生——富有，（相对）健康，精神状态稳定。是时候享受黄金岁月了！你“赢”了！"; eventText.className = 'milestone'; }
+                     else if (money > 5000 && health > 30) { endMessage += "你成功了。有一些积蓄，健康状况也*不算*太糟。本可能更糟！"; eventText.className = 'milestone'; }
+                     else { endMessage += "你幸存下来了。身无分文，压力重重，身体嘎吱作响，但总算活下来了。值得吗？游戏终止。"; eventText.className = ''; }
+                     eventText.textContent = endMessage; eventTriggered.retirement = true; endGame(); return;
+                  }
+
+                 // Final display update
+                 updateDisplay();
+            }
+
+            // --- Function to End Game ---
+            function endGame() {
+                gameOver = true;
+                action1Button.disabled = true; action2Button.disabled = true;
+                action3Button.disabled = true; // Disable travel button too
+                rebornButton.style.display = 'inline-block';
+                rebornButtonContainer.style.minHeight = 'auto';
+                 if (!eventText.classList.contains('milestone') && !eventTriggered.retirement) { eventText.classList.add('game-over'); }
+                 else if (eventText.textContent.includes("幸存下来了")) { eventText.className = ''; }
+                 console.log("Game Over triggered. Reborn button visible.");
+             }
+
+            // --- Start the game ---
+            initGame();
+
+        }); // End of DOMContentLoaded listener
+    </script>
+</body>
+</html>

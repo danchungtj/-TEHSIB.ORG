@@ -1,0 +1,124 @@
+/* Basic reset and full-screen canvas setup */
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+/* Title styling */
+#title {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+/* Stats Display - Updated position to left side */
+#stats-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;  /* Changed from right: 20px to left: 20px */
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+    min-width: 200px; /* Added minimum width for better readability */
+}
+
+.stat {
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.label {
+    margin-right: 15px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+#total-population,
+#infected-count,
+#infection-rate {
+    font-family: monospace;
+    font-size: 1.1em;
+    color: #fff;
+}
+
+#infected-count {
+    color: #ff4444;
+}
+
+/* Error display styling */
+#error-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 5px;
+    color: white;
+    z-index: 1000;
+    max-width: 80%;
+    text-align: center;
+    display: none; /* Hidden by default */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#error-message {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+#error-details {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    margin: 10px 0;
+    white-space: pre-wrap;
+    text-align: left;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.9em;
+    border-radius: 3px;
+}
+
+#copy-error-button {
+    padding: 8px 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    background: #ffffff;
+    border: none;
+    border-radius: 3px;
+    color: #ff0000;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#copy-error-button:hover {
+    background: #f0f0f0;
+}
+
+#copy-status {
+    margin-left: 10px;
+    font-style: italic;
+    font-size: 0.9em;
+}

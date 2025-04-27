@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complex Airport Aircraft Takeoff and Landing Simulator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        #airport {
+            position: relative;
+            width: 1200px;
+            height: 800px;
+            background-color: #a0a0a0;
+            border: 2px solid #808080;
+        }
+
+        .runway {
+            position: absolute;
+            background-color: #404040;
+        }
+
+        .taxiway {
+            position: absolute;
+            background-color: #606060;
+        }
+
+        .gate {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #80c080;
+            border: 2px solid #408040;
+        }
+
+        .plane {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-size: cover;
+            transition: all 5s;
+        }
+
+        .terminal {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background-color: #b0c4de;
+            border: 2px solid #4682b4;
+        }
+
+        #tower {
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            width: 80px;
+            height: 120px;
+            background-color: #d2b48c;
+            border: 2px solid #8b4513;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+        }
+
+        /* 标注样式 */
+        .label {
+            position: absolute;
+            color: white;
+            font-size: 12px;
+        }
+
+        /* 滑块样式 */
+        #planeCountSlider {
+            width: 200px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 机场区域 -->
+    <!-- Airport area -->
+    <div id="airport">
+        <!-- 4条横向跑道布局，进一步加宽跑道，跑道间不留空隙 -->
+        <!-- 4 horizontal runway layouts, further widen the runways with no gaps between them -->
+        <div id="runway1" class="runway" style="width: 800px; height: 137.5px; bottom: 100px; left: 200px;">
+            <div class="label" style="top: 5px; left: 5px;">跑道1 / Runway 1</div>
+        </div>
+        <div id="runway2" class="runway" style="width: 800px; height: 137.5px; bottom: 237.5px; left: 200px;">
+            <div class="label" style="top: 5px; left: 5px;">跑道2 / Runway 2</div>
+        </div>
+        <div id="runway3" class="runway" style="width: 800px; height: 137.5px; bottom: 375px; left: 200px;">
+            <div class="label" style="top: 5px; left: 5px;">跑道3 / Runway 3</div>
+        </div>
+        <div id="runway4" class="runway" style="width: 800px; height: 137.5px; bottom: 512.5px; left: 200px;">
+            <div class="label" style="top: 5px; left: 5px;">跑道4 / Runway 4</div>
+        </div>
+        <!-- 滑行道 -->
+        <!-- Taxiways -->
+        <div id="taxiway1" class="taxiway" style="width: 150px; height: 20px; bottom: 50px; left: 200px;"></div>
+        <div id="taxiway2" class="taxiway" style="width: 20px; height: 100px; left: 300px; bottom: 50px;"></div>
+        <div id="taxiway3" class="taxiway" style="width: 150px; height: 20px; bottom: 200px; left: 200px;"></div>
+        <div id="taxiway4" class="taxiway" style="width: 20px; height: 100px; left: 300px; bottom: 200px;"></div>
+        <div id="taxiway5" class="taxiway" style="width: 150px; height: 20px; bottom: 350px; left: 200px;"></div>
+        <div id="taxiway6" class="taxiway" style="width: 20px; height: 100px; left: 300px; bottom: 350px;"></div>
+        <div id="taxiway7" class="taxiway" style="width: 150px; height: 20px; bottom: 500px; left: 200px;"></div>
+        <div id="taxiway8" class="taxiway" style="width: 20px; height: 100px; left: 300px; bottom: 500px;"></div>
+        <!-- 停机位 -->
+        <!-- Gates -->
+        <div id="gate1" class="gate" style="bottom: 100px; left: 150px;">
+            <div class="label" style="top: 5px; left: 5px;">停机位1 / Gate 1</div>
+        </div>
+        <div id="gate2" class="gate" style="bottom: 250px; left: 150px;">
+            <div class="label" style="top: 5px; left: 5px;">停机位2 / Gate 2</div>
+        </div>
+        <div id="gate3" class="gate" style="bottom: 400px; left: 150px;">
+            <div class="label" style="top: 5px; left: 5px;">停机位3 / Gate 3</div>
+        </div>
+        <div id="gate4" class="gate" style="bottom: 550px; left: 150px;">
+            <div class="label" style="top: 5px; left: 5px;">停机位4 / Gate 4</div>
+        </div>
+        <!-- 4个航站楼 -->
+        <!-- 4 terminals -->
+        <div id="terminal1" class="terminal" style="bottom: 50px; left: 0;">
+            <div class="label" style="top: 5px; left: 5px;">航站楼1 / Terminal 1</div>
+        </div>
+        <div id="terminal2" class="terminal" style="bottom: 200px; left: 0;">
+            <div class="label" style="top: 5px; left: 5px;">航站楼2 / Terminal 2</div>
+        </div>
+        <div id="terminal3" class="terminal" style="bottom: 350px; left: 0;">
+            <div class="label" style="top: 5px; left: 5px;">航站楼3 / Terminal 3</div>
+        </div>
+        <div id="terminal4" class="terminal" style="bottom: 500px; left: 0;">
+            <div class="label" style="top: 5px; left: 5px;">航站楼4 / Terminal 4</div>
+        </div>
+        <!-- 塔台 -->
+        <!-- Tower -->
+        <div id="tower">
+            <div class="label" style="top: 5px; left: 5px;">塔台 / Tower</div>
+        </div>
+    </div>
+    <!-- 控制按钮区域 -->
+    <!-- Control button area -->
+    <div id="controls">
+        <button id="startButton">开始 / Start</button>
+        <button id="stopButton">结束 / Stop</button>
+        <input type="range" id="planeCountSlider" min="1" max="20" value="10">
+        <span id="planeCountDisplay">飞机数量: 10</span>
+    </div>
+    <script>
+        const airport = document.getElementById('airport');
+        let numPlanes = 10; // 飞机数量 / Number of planes
+        const planes = [];
+        const runways = document.querySelectorAll('.runway');
+        const gates = document.querySelectorAll('.gate');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const planeCountSlider = document.getElementById('planeCountSlider');
+        const planeCountDisplay = document.getElementById('planeCountDisplay');
+        let intervalId;
+        let isSimulating = false;
+        const planeImageUrl = 'https://p9-flow-imagex-sign.byteimg.com/ocean-cloud-tos/image_skill/151c2f03-bb87-4f67-a930-d84b35f217d5_1744042380579760404~tplv-a9rns2rl98-web-watermark-v2.png?rk3s=b14c611d&x-expires=1775578380&x-signature=7UEZodpgrEmtEohmB%2FbWs%2FV8OhA%3D';
+
+        // 创建飞机元素
+        // Create an aircraft element
+        function createPlane() {
+            const plane = document.createElement('div');
+            plane.classList.add('plane');
+            plane.style.backgroundImage = `url('${planeImageUrl}')`;
+            const randomGate = gates[Math.floor(Math.random() * gates.length)];
+            plane.style.left = randomGate.offsetLeft + (randomGate.offsetWidth - 30) / 2 + 'px';
+            plane.style.bottom = randomGate.offsetTop + (randomGate.offsetHeight - 30) / 2 + 'px';
+            airport.appendChild(plane);
+            return plane;
+        }
+
+        // 找到离飞机最近的跑道
+        // Find the nearest runway to the aircraft
+        function findNearestRunway(plane) {
+            let nearestRunway;
+            let minDistance = Infinity;
+            const planeY = plane.offsetTop + 15;
+            runways.forEach(runway => {
+                const runwayY = runway.offsetTop + runway.offsetHeight / 2;
+                const distance = Math.abs(runwayY - planeY);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestRunway = runway;
+                }
+            });
+            return nearestRunway;
+        }
+
+        // 飞机起飞逻辑
+        // Aircraft takeoff logic
+        function takeoff(plane) {
+            if (!isSimulating) return;
+            const nearestRunway = findNearestRunway(plane);
+            const endX = airport.offsetWidth * 0.9;
+            const runwayTop = nearestRunway.offsetTop + nearestRunway.offsetHeight / 2 - 15;
+            plane.style.bottom = runwayTop + 'px';
+            plane.style.left = nearestRunway.offsetLeft + 'px';
+            setTimeout(() => {
+                if (isSimulating) {
+                    plane.style.left = endX + 'px';
+                }
+            }, 500);
+            setTimeout(() => {
+                if (isSimulating) {
+                    airport.removeChild(plane);
+                    const index = planes.indexOf(plane);
+                    if (index > -1) {
+                        planes.splice(index, 1);
+                    }
+                    if (planes.length < numPlanes) {
+                        const newPlane = createPlane();
+                        planes.push(newPlane);
+                        simulateFlight(newPlane);
+                    }
+                }
+            }, 5500);
+        }
+
+        // 飞机降落逻辑
+        // Aircraft landing logic
+        function land(plane) {
+            if (!isSimulating) return;
+            const nearestRunway = findNearestRunway(plane);
+            const startX = airport.offsetWidth * 0.9;
+            const runwayTop = nearestRunway.offsetTop + nearestRunway.offsetHeight / 2 - 15;
+            plane.style.bottom = runwayTop + 'px';
+            plane.style.left = startX + 'px';
+            setTimeout(() => {
+                if (isSimulating) {
+                    plane.style.left = nearestRunway.offsetLeft + 'px';
+                }
+            }, 500);
+            setTimeout(() => {
+                if (isSimulating) {
+                    const randomGate = gates[Math.floor(Math.random() * gates.length)];
+                    plane.style.left = randomGate.offsetLeft + (randomGate.offsetWidth - 30) / 2 + 'px';
+                    plane.style.bottom = randomGate.offsetTop + (randomGate.offsetHeight - 30) / 2 + 'px';
+                    setTimeout(() => {
+                        if (isSimulating) {
+                            simulateFlight(plane);
+                        }
+                    }, Math.random() * 5000);
+                }
+            }, 5500);
+        }
+
+        // 模拟飞机飞行（随机起飞或降落）
+        // Simulate aircraft flight (random takeoff or landing)
+        function simulateFlight(plane) {
+            if (!isSimulating) return;
+            const isTakeoff = Math.random() < 0.5;
+            setTimeout(() => {
+                if (isSimulating) {
+                    if (isTakeoff) {
+                        takeoff(plane);
+                    } else {
+                        land(plane);
+                    }
+                }
+            }, Math.random() * 5000);
+        }
+
+        // 开始模拟
+        // Start the simulation
+        function startSimulation() {
+            if (isSimulating) return;
+            isSimulating = true;
+            clearInterval(intervalId);
+            for (let i = 0; i < numPlanes; i++) {
+                const plane = createPlane();
+                planes.push(plane);
+                simulateFlight(plane);
+            }
+            intervalId = setInterval(() => {
+                if (isSimulating && planes.length < numPlanes) {
+                    const newPlane = createPlane();
+                    planes.push(newPlane);
+                    simulateFlight(newPlane);
+                }
+            }, 5000);
+        }
+
+        // 停止模拟
+        // Stop the simulation
+        function stopSimulation() {
+            isSimulating = false;
+            clearInterval(intervalId);
+            planes.forEach(plane => {
+                if (plane.parentNode === airport) {
+                    airport.removeChild(plane);
+                }
+            });
+            planes.length = 0;
+        }
+
+        // 更新飞机数量
+        function updatePlaneCount() {
+            numPlanes = parseInt(planeCountSlider.value);
+            planeCountDisplay.textContent = `飞机数量: ${numPlanes}`;
+            if (isSimulating) {
+                while (planes.length > numPlanes) {
+                    const plane = planes.pop();
+                    if (plane.parentNode === airport) {
+                        airport.removeChild(plane);
+                    }
+                }
+                while (planes.length < numPlanes) {
+                    const newPlane = createPlane();
+                    planes.push(newPlane);
+                    simulateFlight(newPlane);
+                }
+            }
+        }
+
+        // 绑定开始和结束按钮事件
+        // Bind events to start and stop buttons
+        startButton.addEventListener('click', startSimulation);
+        stopButton.addEventListener('click', stopSimulation);
+        planeCountSlider.addEventListener('input', updatePlaneCount);
+    </script>
+</body>
+
+</html>
+    

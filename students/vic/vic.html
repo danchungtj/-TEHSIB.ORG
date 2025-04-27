@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解救Simon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        #game-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+        }
+
+        #maze-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #333;
+        }
+
+        .cell {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            box-sizing: border-box;
+        }
+
+        .wall {
+            background-color: #555;
+        }
+
+        .trap {
+            background-color: #8B0000;
+        }
+
+        #player {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #1E90FF;
+            z-index: 10;
+            transition: all 0.1s ease;
+            border-radius: 50%;
+        }
+
+        #finish {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #32CD32;
+            z-index: 5;
+            border-radius: 50%;
+        }
+
+        .chaser {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #FF4500;
+            z-index: 8;
+            transition: all 0.2s ease;
+            border-radius: 50%;
+        }
+
+        .item {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            z-index: 9;
+        }
+
+        #game-info {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        #level-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        #timer-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        #ending-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        #stickman-scene {
+            width: 300px;
+            height: 300px;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .stickman {
+            position: absolute;
+        }
+
+        #ending-message {
+            font-size: 36px;
+            color: #FFD700;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 2s;
+        }
+
+        #blur-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(5px);
+            display: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <div id="level-display">关卡: 1/10</div>
+        <div id="timer-display">时间: 60s</div>
+        <div id="maze-container"></div>
+        <div id="blur-overlay"></div>
+        <div id="ending-animation">
+            <div id="stickman-scene">
+                <svg id="bound-stickman" width="300" height="300" style="position:absolute;">
+                    <!-- 椅子 -->
+                    <rect x="100" y="180" width="100" height="20" fill="brown" />
+                    <rect x="100" y="150" width="20" height="30" fill="brown" />
+                    <rect x="180" y="150" width="20" height="30" fill="brown" />
+                    <!-- 被绑的火柴人 -->
+                    <circle cx="150" cy="120" r="15" fill="white" />
+                    <line x1="150" y1="135" x2="150" y2="180" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="150" x2="120" y2="170" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="150" x2="180" y2="170" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="180" x2="120" y2="210" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="180" x2="180" y2="210" stroke="white" stroke-width="3" />
+                </svg>
+                <svg id="freed-stickman" width="300" height="300" style="position:absolute; display:none;">
+                    <!-- 解救后的火柴人 -->
+                    <circle cx="150" cy="120" r="15" fill="white" />
+                    <line x1="150" y1="135" x2="150" y2="180" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="150" x2="120" y2="170" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="150" x2="180" y2="170" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="180" x2="120" y2="210" stroke="white" stroke-width="3" />
+                    <line x1="150" y1="180" x2="180" y2="210" stroke="white" stroke-width="3" />
+                </svg>
+            </div>
+            <div id="ending-message">恭喜你解救了 Simon！</div>
+        </div>
+    </div>
+    <div id="game-info"></div>
+    <script>
+        const numLevels = 10;
+        const mazeWidth = 30;
+        const mazeHeight = 30;
+        const cellSize = 20;
+        const gameContainer = document.getElementById('game-container');
+        const mazeContainer = document.getElementById('maze-container');
+        const levelDisplay = document.getElementById('level-display');
+        const timerDisplay = document.getElementById('timer-display');
+        const endingAnimation = document.getElementById('ending-animation');
+        const endingMessage = document.getElementById('ending-message');
+        const boundStickman = document.getElementById('bound-stickman');
+        const freedStickman = document.getElementById('freed-stickman');
+        const blurOverlay = document.getElementById('blur-overlay');
+
+        let currentLevel = 0;
+        let playerX, playerY;
+        let chaserX, chaserY;
+        let maze;
+        let playerElement;
+        let chaserElement;
+        let finishElement;
+        let items = [];
+        let timeLimit;
+        let timer;
+        let playerSpeed = 1;
+
+        // 定义道具类型
+        const ITEM_TYPES = {
+            SPEED_UP: 'speed_up',
+            INVISIBLE: 'invisible',
+            BOMB: 'bomb'
+        };
+
+        // 生成不同难度的迷宫
+        function generateMaze(level) {
+            const wallDensity = 0.2 + level * 0.05; // 随着关卡增加，墙的密度增加
+            const trapDensity = level % 3 === 0 ? 0.1 : 0; // 每3个关卡有陷阱
+            const maze = [];
+            for (let y = 0; y < mazeHeight; y++) {
+                const row = [];
+                for (let x = 0; x < mazeWidth; x++) {
+                    if (x === 0 || y === 0 || x === mazeWidth - 1 || y === mazeHeight - 1) {
+                        row.push(1); // 边界为墙
+                    } else {
+                        if (Math.random() < wallDensity) {
+                            row.push(1); // 墙
+                        } else if (Math.random() < trapDensity) {
+                            row.push(2); // 陷阱
+                        } else {
+                            row.push(0);
+                        }
+                    }
+                }
+                maze.push(row);
+            }
+            // 设置起点和终点
+            maze[1][1] = 0;
+            maze[mazeHeight - 2][mazeWidth - 2] = 0;
+
+            // 使用深度优先搜索确保起点和终点连通
+            const visited = Array.from({ length: mazeHeight }, () => Array(mazeWidth).fill(false));
+            function dfs(x, y) {
+                if (x < 0 || y < 0 || x >= mazeWidth || y >= mazeHeight || (maze[y][x] === 1 || maze[y][x] === 2) || visited[y][x]) {
+                    return;
+                }
+                visited[y][x] = true;
+                dfs(x + 1, y);
+                dfs(x - 1, y);
+                dfs(x, y + 1);
+                dfs(x, y - 1);
+            }
+            dfs(1, 1);
+            if (!visited[mazeHeight - 2][mazeWidth - 2]) {
+                // 如果起点和终点不连通，重新生成迷宫
+                return generateMaze(level);
+            }
+            return maze;
+        }
+
+        // 绘制迷宫
+        function drawMaze() {
+            mazeContainer.innerHTML = '';
+            for (let y = 0; y < mazeHeight; y++) {
+                for (let x = 0; x < mazeWidth; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.style.width = `${cellSize}px`;
+                    cell.style.height = `${cellSize}px`;
+                    cell.style.left = `${x * cellSize}px`;
+                    cell.style.top = `${y * cellSize}px`;
+                    if (maze[y][x] === 1) {
+                        cell.classList.add('wall');
+                    } else if (maze[y][x] === 2) {
+                        cell.classList.add('trap');
+                    }
+                    mazeContainer.appendChild(cell);
+                }
+            }
+        }
+
+        // 初始化玩家和结束点
+        function initPlayerAndFinish() {
+            playerX = 1;
+            playerY = 1;
+            playerElement = document.createElement('div');
+            playerElement.id = 'player';
+            playerElement.style.width = `${cellSize}px`;
+            playerElement.style.height = `${cellSize}px`;
+            playerElement.style.left = `${playerX * cellSize}px`;
+            playerElement.style.top = `${playerY * cellSize}px`;
+            mazeContainer.appendChild(playerElement);
+
+            finishElement = document.createElement('div');
+            finishElement.id = 'finish';
+            finishElement.style.width = `${cellSize}px`;
+            finishElement.style.height = `${cellSize}px`;
+            finishElement.style.left = `${(mazeWidth - 2) * cellSize}px`;
+            finishElement.style.top = `${(mazeHeight - 2) * cellSize}px`;
+            mazeContainer.appendChild(finishElement);
+        }
+
+        // 初始化追兵
+        function initChaser() {
+            do {
+                chaserX = Math.floor(Math.random() * (mazeWidth - 2)) + 1;
+                chaserY = Math.floor(Math.random() * (mazeHeight - 2)) + 1;
+            } while (maze[chaserY][chaserX] === 1 || (chaserX === playerX && chaserY === playerY));
+
+            chaserElement = document.createElement('div');
+            chaserElement.classList.add('chaser');
+            chaserElement.style.width = `${cellSize}px`;
+            chaserElement.style.height = `${cellSize}px`;
+            chaserElement.style.left = `${chaserX * cellSize}px`;
+            chaserElement.style.top = `${chaserY * cellSize}px`;
+            mazeContainer.appendChild(chaserElement);
+        }
+
+        // 生成道具
+        function generateItems() {
+            const numItems = Math.floor(Math.random() * 3) + 1; // 随机生成1 - 3个道具
+            const items = [];
+            for (let i = 0; i < numItems; i++) {
+                let itemX, itemY;
+                do {
+                    itemX = Math.floor(Math.random() * (mazeWidth - 2)) + 1;
+                    itemY = Math.floor(Math.random() * (mazeHeight - 2)) + 1;
+                } while (maze[itemY][itemX] === 1 || (itemX === playerX && itemY === playerY));
+
+                const itemType = Object.values(ITEM_TYPES)[Math.floor(Math.random() * Object.keys(ITEM_TYPES).length)];
+                const itemElement = document.createElement('div');
+                itemElement.classList.add('item');
+                itemElement.style.width = `${cellSize}px`;
+                itemElement.style.height = `${cellSize}px`;
+                itemElement.style.left = `${itemX * cellSize}px`;
+                itemElement.style.top = `${itemY * cellSize}px`;
+                itemElement.dataset.type = itemType;
+                switch (itemType) {
+                    case ITEM_TYPES.SPEED_UP:
+                        itemElement.style.backgroundColor = 'yellow';
+                        break;
+                    case ITEM_TYPES.INVISIBLE:
+                        itemElement.style.backgroundColor = 'purple';
+                        break;
+                    case ITEM_TYPES.BOMB:
+                        itemElement.style.backgroundColor = 'orange';
+                        break;
+                }
+                mazeContainer.appendChild(itemElement);
+                items.push({ x: itemX, y: itemY, element: itemElement, type: itemType });
+            }
+            return items;
+        }
+
+        // 检查玩家是否捡到道具
+        function checkItemPickup() {
+            const item = items.find(item => item.x === playerX && item.y === playerY);
+            if (item) {
+                item.element.remove();
+                items = items.filter(i => i !== item);
+                switch (item.type) {
+                    case ITEM_TYPES.SPEED_UP:
+                        // 加速玩家移动
+                        playerSpeed = 2;
+                        setTimeout(() => {
+                            playerSpeed = 1;
+                        }, 5000); // 加速效果持续5秒
+                        break;
+                    case ITEM_TYPES.INVISIBLE:
+                        // 玩家隐身，追兵无法发现
+                        playerElement.style.opacity = 0.3;
+                        setTimeout(() => {
+                            playerElement.style.opacity = 1;
+                        }, 5000); // 隐身效果持续5秒
+                        break;
+                    case ITEM_TYPES.BOMB:
+                        // 炸弹炸毁周围的墙
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dx = -1; dx <= 1; dx++) {
+                                const newX = playerX + dx;
+                                const newY = playerY + dy;
+                                if (maze[newY] && maze[newY][newX] === 1) {
+                                    maze[newY][newX] = 0;
+                                    const cell = mazeContainer.querySelector(`.cell:nth-child(${newY * mazeWidth + newX + 1})`);
+                                    cell.classList.remove('wall');
+                                }
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        // 移动玩家
+        function movePlayer(dx, dy) {
+            const newX = playerX + dx * playerSpeed;
+            const newY = playerY + dy * playerSpeed;
+            if (maze[newY] && maze[newY][newX] === 0) {
+                playerX = newX;
+                playerY = newY;
+                playerElement.style.left = `${playerX * cellSize}px`;
+                playerElement.style.top = `${playerY * cellSize}px`;
+                checkWin();
+                checkItemPickup();
+            } else if (maze[newY] && maze[newY][newX] === 2) {
+                startLevel(currentLevel); // 踩到陷阱，重新开始当前关卡
+            }
+        }
+
+        // 移动追兵
+        function moveChaser() {
+            if (playerElement.style.opacity === '0.3') {
+                return; // 玩家隐身，追兵不移动
+            }
+            const dx = Math.sign(playerX - chaserX);
+            const dy = Math.sign(playerY - chaserY);
+
+            const possibleMoves = [];
+            if (maze[chaserY + dy][chaserX] === 0) {
+                possibleMoves.push({ dx: 0, dy });
+            }
+            if (maze[chaserY][chaserX + dx] === 0) {
+                possibleMoves.push({ dx, dy: 0 });
+            }
+
+            if (possibleMoves.length > 0) {
+                const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                chaserX += move.dx;
+                chaserY += move.dy;
+                chaserElement.style.left = `${chaserX * cellSize}px`;
+                chaserElement.style.top = `${chaserY * cellSize}px`;
+                checkCaught();
+            }
+        }
+
+        // 检查是否到达终点
+        function checkWin() {
+            if (playerX === mazeWidth - 2 && playerY === mazeHeight - 2) {
+                clearInterval(timer);
+                currentLevel++;
+                if (currentLevel < numLevels) {
+                    startLevel(currentLevel);
+                } else {
+                    showEndingAnimation();
+                }
+            }
+        }
+
+        // 检查是否被追兵抓住
+        function checkCaught() {
+            if (playerX === chaserX && playerY === chaserY) {
+                startLevel(currentLevel); // 重新开始当前关卡
+            }
+        }
+
+        // 开始计时
+        function startTimer() {
+            timeLimit = 60 - currentLevel * 5; // 随着关卡增加，时间限制减少
+            timer = setInterval(() => {
+                timeLimit--;
+                timerDisplay.textContent = `时间: ${timeLimit}s`;
+                if (timeLimit <= 0) {
+                    clearInterval(timer);
+                    startLevel(currentLevel); // 重新开始当前关卡
+                }
+            }, 1000);
+        }
+
+        // 开始新关卡
+        function startLevel(level) {
+            clearInterval(timer);
+            maze = generateMaze(level);
+            drawMaze();
+            initPlayerAndFinish();
+            initChaser();
+            items = generateItems();
+            levelDisplay.textContent = `关卡: ${level + 1}/${numLevels}`;
+            playerSpeed = 1;
+            startTimer();
+        }
+
+        // 显示结束动画
+        function showEndingAnimation() {
+            blurOverlay.style.display = 'block';
+            endingAnimation.style.display = 'flex';
+            boundStickman.style.display = 'none';
+            freedStickman.style.display = 'block';
+            setTimeout(() => {
+                endingMessage.style.opacity = 1;
+            }, 1000);
+        }
+
+        // 键盘事件监听
+        document.addEventListener('keydown', function (event) {
+            switch (event.key) {
+                case 'ArrowUp':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    movePlayer(1, 0);
+                    break;
+            }
+            moveChaser();
+        });
+
+        // 游戏初始化
+        startLevel(currentLevel);
+    </script>
+</body>
+
+</html>
+    

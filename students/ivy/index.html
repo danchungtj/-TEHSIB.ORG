@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>全球丧尸疫情模拟</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+        "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.150.1/examples/jsm/controls/OrbitControls.js"
+      }
+    }
+  </script>
+  <!-- Add dat.gui directly -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+</head>
+<body>
+  <div id="title">Zombie Pandemic</div>
+  <canvas id="bg"></canvas>
+
+  <!-- Stats Display -->
+  <div id="stats-container">
+    <div class="stat">
+      <span class="label">总人口</span>
+      <span id="total-population">7,900,000,000</span>
+    </div>
+    <div class="stat">
+      <span class="label">感染人数</span>
+      <span id="infected-count">0</span>
+    </div>
+    <div class="stat">
+      <span class="label">感染率</span>
+      <span id="infection-rate">0%</span>
+    </div>
+  </div>
+
+  <!-- Error Display Area -->
+  <div id="error-container" style="display: none;">
+    <h2>错误！</h2>
+    <p id="error-message">发生了一个错误。</p>
+    <pre id="error-details"></pre>
+    <button id="copy-error-button">复制错误详情</button>
+    <span id="copy-status" style="margin-left: 10px; font-style: italic;"></span>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
