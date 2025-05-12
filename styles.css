@@ -15,7 +15,7 @@
 }
 
 body {
-    font-family: Candara, Garamond, 'Times New Roman', serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Source Han Sans CN", "WenQuanYi Micro Hei", sans-serif;
     line-height: 1.0;
     color: var(--text-color);
     background-color: #fff;
@@ -234,7 +234,7 @@ body {
 
 /* Additional Classic Typography Styles */
 h1, h2, h3, h4, h5, h6 {
-    font-family: Candara, Garamond, 'Times New Roman', serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Source Han Sans CN", "WenQuanYi Micro Hei", sans-serif;
     font-weight: 600;
     letter-spacing: 0.5px;
     line-height: 1.2;
@@ -246,7 +246,7 @@ p {
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 1rem;
-    font-family: Candara, Garamond, 'Times New Roman', serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Source Han Sans CN", "WenQuanYi Micro Hei", sans-serif;
 }
 
 .content-block p {
@@ -269,7 +269,7 @@ p {
     text-decoration: none;
     border-radius: 4px;
     transition: background-color 0.3s ease;
-    font-family: Candara, Garamond, 'Times New Roman', serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Source Han Sans CN", "WenQuanYi Micro Hei", sans-serif;
 }
 
 .btn:hover {
